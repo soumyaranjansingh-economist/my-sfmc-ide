@@ -268,9 +268,7 @@
             // 1. The Main Message (e.g., "Object expected: Stringif")
             if(errorObj.message) {
                 prettyHtml += `<span class="error-title">⚠ Execution Error: ${errorObj.message}</span>`;
-            } else {
-                prettyHtml += `<span class="error-title">⚠ An Error Occurred</span>`;
-            }
+            } 
 
             // 2. The Description (Clean up newlines)
             if(errorObj.description) {
