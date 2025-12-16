@@ -3,242 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SFMC Dev Console</title>
+    <title>SFMC Query Studio Lite</title>
     <style>
-        /* VS Code Dark Theme Inspiration */
         :root {
             --bg-color: #1e1e1e;
-            --sidebar-color: #252526;
             --accent-color: #007acc;
             --text-color: #d4d4d4;
             --border-color: #3c3c3c;
         }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 15px; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        /* Header Area */
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        .header img {
-            height: 30px;
-        }
-
-        h2 { margin: 0; font-size: 1.2rem; font-weight: 500; }
-
-        /* Toolbar (Inputs & Dropdowns) */
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            background: var(--sidebar-color);
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid var(--border-color);
-            flex-wrap: wrap;
-        }
-
-        input[type="text"], select {
-            background: #3c3c3c;
-            border: 1px solid #555;
-            color: white;
-            padding: 8px;
-            border-radius: 3px;
-            font-size: 14px;
-        }
-
-        input[type="text"] { flex-grow: 1; min-width: 200px; }
-        select { width: 150px; cursor: pointer; }
-
-        /* The Button */
-        .run-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        /* Toolbar */
+        .toolbar { display: flex; gap: 10px; background: #252526; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); align-items: center; }
+        input[type="text"], select { background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; border-radius: 3px; }
+        input[type="text"] { flex-grow: 1; }
+        .run-btn { background-color: var(--accent-color); color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 3px; font-weight: bold; }
         .run-btn:hover { background-color: #005f9e; }
-        .run-btn:active { transform: translateY(1px); }
 
-        /* The Editor Area */
-        .editor-container {
-            position: relative;
-        }
-        
-        textarea {
-            width: 100%;
-            height: 350px;
-            background-color: #1e1e1e; /* VS Code Editor Bg */
-            color: #d4d4d4;
-            border: 1px solid var(--accent-color);
-            padding: 15px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            box-sizing: border-box;
-            border-radius: 5px;
-            resize: vertical;
-        }
-        
-        textarea:focus { outline: none; box-shadow: 0 0 5px rgba(0,122,204, 0.5); }
+        /* Editor */
+        textarea { width: 100%; height: 250px; background-color: #1e1e1e; color: #9cdcfe; border: 1px solid var(--accent-color); padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; box-sizing: border-box; border-radius: 5px; }
 
-        /* The Output Area */
-        .output-label { font-size: 0.9rem; color: #888; margin-bottom: 5px; }
-        
-        #output {
-            background-color: #111;
-            color: #eee;
-            border-left: 4px solid var(--accent-color);
-            padding: 20px;
-            min-height: 80px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            border-radius: 0 5px 5px 0;
-            overflow-x: auto;
-        }
-
-        .status { font-size: 0.8rem; color: #888; margin-left: auto; }
-
+        /* The Output Table (Query Studio Style) */
+        #outputArea { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: sans-serif; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+        th { background-color: #333; color: white; }
+        tr:nth-child(even) { background-color: #252526; }
+        tr:hover { background-color: #303030; }
+        .raw-text { white-space: pre-wrap; font-family: monospace; padding: 15px; background: #111; border-left: 4px solid var(--accent-color); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    
-    <div class="header">
-        <img src="https://eu1static.oktacdn.com/fs/bco/4/fs0atfh9rvkiGsYSQ0i7" alt="Logo"/>
-        <h2>SFMC Mini-IDE</h2>
-        <span class="status" id="statusMsg">Ready</span>
-    </div>
-
     <div class="toolbar">
+        <h3>⚡ Query Studio Lite</h3>
         <select id="langSelect" onchange="changeTemplate()">
-            <option value="empty" disabled selected>Select Language...</option>
+            <option value="" disabled selected>Load Template...</option>
+            <option value="data">SELECT (Instant Data)</option>
+            <option value="sql">SELECT (Standard SQL - Slow)</option>
             <option value="ampscript">AMPscript</option>
-            <option value="ssjs">SSJS (Core)</option>
-            <option value="sql">SQL (via WSProxy)</option>
-            <option value="html">HTML + Mixed</option>
         </select>
-
-        <input type="text" id="sfmcUrl" placeholder="Paste your Cloud Page URL here (Auto-saves)...">
-        
-        <button class="run-btn" onclick="runCode()">▶ Run</button>
+        <input type="text" id="sfmcUrl" placeholder="Paste Cloud Page URL here...">
+        <button class="run-btn" onclick="runCode()">Run</button>
     </div>
 
-    <div class="editor-container">
-        <textarea id="codeEditor" spellcheck="false" placeholder="Select a language above or type code here..."></textarea>
-    </div>
-
-    <div>
-        <div class="output-label">Console Output:</div>
-        <div id="output">Results will appear here...</div>
-    </div>
-
+    <textarea id="codeEditor" spellcheck="false" placeholder="Select 'SELECT (Instant Data)' to start querying..."></textarea>
+    
+    <div id="outputArea"></div>
 </div>
 
 <script>
-    // --- 1. Templates for the Dropdown ---
+    // --- 1. Templates ---
     const templates = {
-        ampscript: `%%[\n    /* AMPscript Block */\n    VAR @msg, @time\n    SET @msg = "Hello from Mini-IDE"\n    SET @time = Now()\n]%%\n\nOutput: %%=v(@msg)=%% <br>\nServer Time: %%=v(@time)=%%`,
-        
-        ssjs: `<script runat="server">\n    Platform.Load("Core", "1");\n    try {\n        // SSJS Logic Here\n        var data = { message: "Hello SSJS", status: "Active" };\n        Write(Stringify(data));\n    } catch(e) {\n        Write("Error: " + Stringify(e));\n    }\n<\/script>`,
-        
-        // Note: Raw SQL cannot run directly on CloudPages. We use WSProxy to simulate it.
-        sql: `<script runat="server">\n    Platform.Load("Core", "1");\n    var proxy = new Script.Util.WSProxy();\n    try {\n        // Example: Retrieve Data Extensions\n        var cols = ["Name", "CustomerKey"];\n        var filter = {\n            Property: "Name",\n            SimpleOperator: "like",\n            Value: "Test"\n        };\n        var data = proxy.retrieve("DataExtension", cols, filter);\n        Write(Stringify(data));\n    } catch(e) {\n        Write(Stringify(e));\n    }\n<\/script>`,
-        
-        html: `<h3>HTML Layout</h3>\n<hr>\n%%[ SET @name = "Developer" ]%%\n<p>Welcome, %%=v(@name)=%%</p>`
+        // This is the "Magic" script that acts like Query Studio
+        data: `<script runat="server">\n    Platform.Load("Core", "1");\n    var proxy = new Script.Util.WSProxy();\n    try {\n        \n        /* 1. MODIFY THIS SETTINGS */\n        var deName = "ENT.Subscribers"; // Name of Data Extension or View\n        var cols = ["SubscriberKey", "EmailAddress", "Status"]; // Columns to Select\n        var filter = {\n            Property: "Status",\n            SimpleOperator: "equals",\n            Value: "Active"\n        };\n\n        /* 2. EXECUTE QUERY */\n        var data = proxy.retrieve(deName, cols, filter);\n        \n        /* 3. RETURN JSON (Auto-Table) */\n        Write(Stringify(data.Results));\n\n    } catch(e) {\n        Write(Stringify(e));\n    }\n<\/script>`,
+
+        // Explanation of why raw SQL is hard
+        sql: `\n`,
+
+        ampscript: `%%[\n    SET @msg = "Hello World"\n]%%\nOutput: %%=v(@msg)=%%`
     };
 
-    // --- 2. On Load: Check Memory ---
-    window.onload = function() {
-        // Retrieve the saved URL from browser memory
+    // --- 2. Load URL from Memory ---
+    window.onload = () => {
         const savedUrl = localStorage.getItem("sfmc_runner_url");
-        if(savedUrl) {
-            document.getElementById('sfmcUrl').value = savedUrl;
-        }
+        if(savedUrl) document.getElementById('sfmcUrl').value = savedUrl;
     };
 
-    // --- 3. Dropdown Logic ---
     function changeTemplate() {
         const lang = document.getElementById('langSelect').value;
-        const editor = document.getElementById('codeEditor');
-        
-        if(editor.value.length > 10) {
-            if(!confirm("Replace current code with template?")) return;
-        }
-        
-        if(templates[lang]) {
-            editor.value = templates[lang];
-        }
+        if(templates[lang]) document.getElementById('codeEditor').value = templates[lang];
     }
 
-    // --- 4. Run Function ---
+    // --- 3. Run & Format Results ---
     async function runCode() {
-        const urlInput = document.getElementById('sfmcUrl');
+        const url = document.getElementById('sfmcUrl').value;
         const code = document.getElementById('codeEditor').value;
-        const outputDiv = document.getElementById('output');
-        const statusMsg = document.getElementById('statusMsg');
+        const out = document.getElementById('outputArea');
 
-        // Validation
-        if(!urlInput.value) { 
-            alert("Please enter your Cloud Page URL first."); 
-            urlInput.focus();
-            return; 
-        }
-
-        // Save URL to memory so user doesn't have to type it again
-        localStorage.setItem("sfmc_runner_url", urlInput.value);
-
-        // Update UI
-        statusMsg.innerText = "Sending to Marketing Cloud...";
-        statusMsg.style.color = "#007acc";
-        outputDiv.innerHTML = '<span style="color:#888">Processing...</span>';
+        if(!url) { alert("Need URL!"); return; }
+        localStorage.setItem("sfmc_runner_url", url);
+        
+        out.innerHTML = "<p style='color:#888'>Running Query...</p>";
 
         try {
-            const response = await fetch(urlInput.value, {
-                method: 'POST',
-                body: code
-            });
+            const res = await fetch(url, { method: 'POST', body: code });
+            const text = await res.text();
 
-            const result = await response.text();
+            // Try to parse JSON to make a Table
+            try {
+                const jsonData = JSON.parse(text);
+                if(Array.isArray(jsonData) && jsonData.length > 0) {
+                    out.innerHTML = createTable(jsonData);
+                } else {
+                    out.innerHTML = `<div class="raw-text">${text}</div>`;
+                }
+            } catch (e) {
+                // Not JSON? Just show text
+                out.innerHTML = `<div class="raw-text">${text}</div>`;
+            }
             
-            statusMsg.innerText = "Success (200 OK)";
-            statusMsg.style.color = "#4caf50"; // Green
-            outputDiv.innerHTML = result; // Render the HTML result
-            
-        } catch (error) {
-            statusMsg.innerText = "Connection Failed";
-            statusMsg.style.color = "#f44336"; // Red
-            outputDiv.innerHTML = "Error: " + error + "\n\n(Check if your Cloud Page has the CORS headers!)";
+        } catch (err) {
+            out.innerHTML = "Error: " + err;
         }
     }
-</script>
 
+    // --- 4. The Table Generator ---
+    function createTable(data) {
+        if(data.length === 0) return "No Rows Found.";
+        
+        // Get headers from first object
+        const headers = Object.keys(data[0]);
+        
+        let html = '<table><thead><tr>';
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += '</tr></thead><tbody>';
+        
+        data.forEach(row => {
+            html += '<tr>';
+            headers.forEach(h => html += `<td>${row[h]}</td>`);
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        return html;
+    }
+</script>
 </body>
 </html>
