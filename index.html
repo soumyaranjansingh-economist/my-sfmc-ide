@@ -238,67 +238,74 @@
         }
     }
 
-    // 3. The Smart Formatter Logic
-    // 3. The Smart Formatter Logic (Updated for SSJS & Jint Errors)
+    // 3. The Smart Formatter Logic (Fixed to allow Success JSON)
     function parseResult(text) {
         let errorObj = null;
-        let isJsonError = false;
+        let isJson = false;
 
-        // Clean the text to see if it's JSON
-        // Sometimes it starts with "Error: {" and sometimes just "{"
+        // Clean the text
         let cleanText = text.trim();
+        
+        // 1. Check if it was explicitly flagged as Error by our Listener
         if (cleanText.startsWith('Error: ')) {
-            cleanText = cleanText.substring(7); // Remove "Error: " prefix
+            cleanText = cleanText.substring(7); // Remove "Error: "
         }
 
-        // Try to parse it as JSON
-        if (cleanText.startsWith('{')) {
+        // 2. Try to parse as JSON
+        if (cleanText.startsWith('{') || cleanText.startsWith('[')) {
             try {
                 errorObj = JSON.parse(cleanText);
-                isJsonError = true;
+                isJson = true;
             } catch (e) {
-                // Not valid JSON, ignore
+                // Not valid JSON, treat as normal text/HTML
             }
         }
 
-        // If it is a JSON error, format it beautifully
-        if (isJsonError && errorObj) {
-            let prettyHtml = `<div class="error-box">`;
+        // 3. DECISION TIME: Is this an Error or just Data?
+        if (isJson && errorObj) {
             
-            // 1. The Main Message (e.g., "Object expected: Stringif")
-            if(errorObj.message) {
-                prettyHtml += `<span class="error-title">⚠ Execution Error: ${errorObj.message}</span>`;
-            } 
+            // Check for specific "signatures" of an SFMC Error
+            const isRealError = (
+                errorObj.jintException ||                 // SSJS System Error
+                (errorObj.message && errorObj.description && errorObj.message.includes("Error")) || // AMPscript Error
+                (errorObj.message && errorObj.description && errorObj.description.includes("Exception"))
+            );
 
-            // 2. The Description (Clean up newlines)
-            if(errorObj.description) {
-                // Remove the duplicate message from description if present
-                let cleanDesc = errorObj.description.replace(errorObj.message, "").trim();
+            if (isRealError) {
+                // --- RENDER ERROR UI ---
+                let prettyHtml = `<div class="error-box">`;
                 
-                cleanDesc = cleanDesc
-                    .replace(/\r\n/g, "<br>")
-                    .replace(/\n/g, "<br>");
+                // Title
+                let title = errorObj.message || "Execution Error";
+                prettyHtml += `<span class="error-title">⚠ ${title}</span>`;
 
-                if(cleanDesc.length > 0) {
-                     prettyHtml += `<div class="error-detail">${cleanDesc}</div>`;
+                // Description
+                if(errorObj.description) {
+                    let cleanDesc = errorObj.description.replace(errorObj.message, "").trim();
+                    cleanDesc = cleanDesc.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
+                    if(cleanDesc) prettyHtml += `<div class="error-detail">${cleanDesc}</div>`;
                 }
-            }
 
-            // 3. The Jint Exception (The scary stack trace) - Put in a Dropdown
-            if(errorObj.jintException) {
-                prettyHtml += `
-                    <details>
-                        <summary>View System Stack Trace</summary>
-                        <div class="stack-trace">${errorObj.jintException}</div>
-                    </details>
-                `;
+                // Stack Trace (Hidden by default)
+                if(errorObj.jintException) {
+                    prettyHtml += `
+                        <details>
+                            <summary>View System Stack Trace</summary>
+                            <div class="stack-trace">${errorObj.jintException}</div>
+                        </details>
+                    `;
+                }
+                prettyHtml += `</div>`;
+                return prettyHtml;
+            } 
+            else {
+                // --- RENDER SUCCESS UI (PRETTY JSON) ---
+                // If it's just data (e.g. {status: "OK"}), show it nicely formatted
+                return `<pre style="color: #28a745; font-weight: bold;">${JSON.stringify(errorObj, null, 4)}</pre>`;
             }
-            
-            prettyHtml += `</div>`;
-            return prettyHtml;
         }
 
-        // If NOT an error (or just normal HTML), return as is
+        // 4. Not JSON? Just return the HTML/Text normally
         return text;
     }
 </script>
