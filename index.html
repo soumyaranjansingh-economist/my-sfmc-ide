@@ -5,139 +5,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SFMC Dev Console</title>
     <style>
-        /* Clean Light Theme */
+        /* Base Theme */
         :root {
-            --bg-color: #f4f6f8;       /* Light Grey Background */
-            --card-color: #ffffff;     /* White Container */
-            --accent-color: #007bff;   /* SFMC Blue */
-            --text-color: #333333;     /* Dark Grey Text */
-            --border-color: #e1e4e8;   /* Subtle Borders */
+            --bg-color: #f4f6f8;
+            --card-color: #ffffff;
+            --accent-color: #007bff;
+            --text-color: #333;
+            --border-color: #e1e4e8;
+            --editor-bg: #1e1e1e; /* VS Code Dark */
+            --editor-text: #d4d4d4;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 40px 20px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
+            margin: 0; padding: 40px 20px;
+            background-color: var(--bg-color); color: var(--text-color);
+            display: flex; justify-content: center;
         }
 
         .container {
-            width: 100%;
-            max-width: 900px;
+            width: 100%; max-width: 950px;
             background: var(--card-color);
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Soft Shadow */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Keeps corners rounded */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column;
+            overflow: hidden;
         }
 
-        /* Header Area */
+        /* Header */
         .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 25px;
-            border-bottom: 1px solid var(--border-color);
-            background: #fafbfc;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 25px; border-bottom: 1px solid var(--border-color); background: #fafbfc;
         }
-
-        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
         .header img { height: 28px; }
         h2 { margin: 0; font-size: 1.1rem; font-weight: 600; color: #24292e; }
 
         /* Toolbar */
         .toolbar {
-            padding: 15px 25px;
-            background: var(--card-color);
-            display: flex;
-            gap: 15px;
-            align-items: center;
+            padding: 12px 25px; background: #fff;
+            display: flex; gap: 15px; align-items: center;
             border-bottom: 1px solid var(--border-color);
         }
+        select { padding: 8px; border: 1px solid #ced4da; border-radius: 4px; cursor: pointer; }
 
-        select {
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            background-color: #fff;
-            color: #495057;
-            font-size: 14px;
-            cursor: pointer;
-            outline: none;
-        }
-        select:hover { border-color: #adb5bd; }
-
-        /* The Run Button */
         .run-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 24px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: background 0.2s;
-            margin-left: auto; /* Pushes button to the right */
+            background-color: var(--accent-color); color: white; border: none;
+            padding: 8px 24px; border-radius: 4px; cursor: pointer;
+            font-weight: 600; font-size: 14px; margin-left: auto;
+            display: flex; align-items: center; gap: 8px;
         }
         .run-btn:hover { background-color: #0056b3; }
+        .run-btn:disabled { background-color: #a0cfff; cursor: not-allowed; }
 
-        /* The Editor Area */
-        .editor-container {
-            padding: 0;
+        /* Spinner (Loader) */
+        .spinner {
+            display: none; /* Hidden by default */
+            width: 16px; height: 16px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Dark Editor */
+        .editor-container { position: relative; background: var(--editor-bg); }
         textarea {
-            width: 100%;
-            height: 350px;
-            background-color: #ffffff;
-            color: #24292e;
-            border: none;
-            padding: 25px;
+            width: 100%; height: 400px;
+            background-color: var(--editor-bg);
+            color: var(--editor-text);
+            border: none; padding: 20px;
             font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            box-sizing: border-box;
-            resize: vertical;
-            outline: none;
+            font-size: 13px; line-height: 1.6;
+            box-sizing: border-box; resize: vertical; outline: none;
         }
-        /* Add a subtle top shadow to separate editor from toolbar */
-        textarea { box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
 
-        /* The Output Area */
-        .output-section {
-            background: #fafbfc;
-            border-top: 1px solid var(--border-color);
-            padding: 0;
-        }
-        
+        /* Output Section */
+        .output-section { background: #fafbfc; border-top: 1px solid var(--border-color); }
         .output-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #6a737d;
-            padding: 10px 25px;
-            background: #f6f8fa;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: bold;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+            color: #6a737d; padding: 8px 25px; background: #f6f8fa;
+            border-bottom: 1px solid var(--border-color); font-weight: bold;
         }
-        
         #output {
-            padding: 25px;
-            min-height: 80px;
-            white-space: pre-wrap;
-            font-family: 'Menlo', monospace;
-            font-size: 13px;
-            color: #24292e;
+            padding: 25px; min-height: 100px;
+            font-family: 'Menlo', monospace; font-size: 13px; color: #24292e;
+            white-space: pre-wrap; /* Preserve formatting */
+            overflow-x: auto;
         }
 
-        /* Status Indicator */
-        .status { font-size: 0.85rem; color: #6a737d; font-weight: 500; }
-
+        /* Error Styles */
+        .error-box { background: #fff5f5; border: 1px solid #ffcdd2; padding: 15px; border-radius: 4px; color: #b71c1c; }
+        .error-title { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; display: block; }
+        .error-detail { color: #d32f2f; font-size: 0.95em; line-height: 1.6; }
+        .inner-exception { margin-top: 10px; padding-left: 10px; border-left: 3px solid #ef9a9a; color: #555; }
     </style>
 </head>
 <body>
@@ -153,7 +115,7 @@
     </div>
 
     <div class="toolbar">
-        <label style="font-size: 14px; color: #555;">Language:</label>
+        <label style="font-size: 14px; color: #555;">Template:</label>
         <select id="langSelect" onchange="changeTemplate()">
             <option value="empty" disabled selected>Select...</option>
             <option value="ampscript">AMPscript</option>
@@ -161,7 +123,10 @@
             <option value="html">HTML</option>
         </select>
         
-        <button class="run-btn" onclick="runCode()">Run Code</button>
+        <button class="run-btn" id="runBtn" onclick="runCode()">
+            <div class="spinner" id="loadingSpinner"></div>
+            <span id="btnText">Run Code</span>
+        </button>
     </div>
 
     <div class="editor-container">
@@ -169,7 +134,7 @@
     </div>
 
     <div class="output-section">
-        <div class="output-label">Result</div>
+        <div class="output-label">Console Result</div>
         <div id="output">Waiting for input...</div>
     </div>
 
@@ -184,42 +149,39 @@
 
     // 1. Templates
     const templates = {
-        ampscript: `%%[\n    /* AMPscript Block */\n    VAR @msg\n    SET @msg = "Hello World"\n]%%\n\nMessage: %%=v(@msg)=%%`,
-        
-        ssjs: `<script runat="server">\n    Platform.Load("Core", "1");\n    try {\n        var data = { status: "OK", value: 100 };\n        Write(Stringify(data));\n    } catch(e) {\n        Write("Error");\n    }\n<\/script>`,
-        
+        ampscript: `%%[\n    /* AMPscript Error Test */\n    /* Note: The missing quote below causes an error on purpose */\n    VAR @msg\n    SET @msg = "Hello World\n]%%\n\nMessage: %%=v(@msg)=%%`,
+        ssjs: `<script runat="server">\n    Platform.Load("Core", "1");\n    try {\n        var data = { status: "OK" };\n        Write(Stringify(data));\n    } catch(e) {\n        Write(Stringify(e));\n    }\n<\/script>`,
         html: `<h3>HTML Test</h3>\n<hr>\n<p>This is a test.</p>`
     };
 
-    // 2. Dropdown Logic
     function changeTemplate() {
         const lang = document.getElementById('langSelect').value;
         const editor = document.getElementById('codeEditor');
-        
-        // Simple confirmation if code exists
         if(editor.value.length > 10 && !confirm("Overwrite current code?")) return;
-        
-        if(templates[lang]) {
-            editor.value = templates[lang];
-        }
+        if(templates[lang]) editor.value = templates[lang];
     }
 
-    // 3. Run Function
+    // 2. Main Run Function
     async function runCode() {
         const code = document.getElementById('codeEditor').value;
         const outputDiv = document.getElementById('output');
         const statusMsg = document.getElementById('statusMsg');
+        const runBtn = document.getElementById('runBtn');
+        const spinner = document.getElementById('loadingSpinner');
+        const btnText = document.getElementById('btnText');
 
-        // Check if user forgot to update the URL in the code
+        // Validation
         if(CLOUD_PAGE_URL.includes("YOUR-CLOUD-PAGE")) {
-            alert("Configuration Error: Please open index.html and paste your Cloud Page URL in line 104.");
+            outputDiv.innerHTML = '<span style="color:#d32f2f">⚠ <strong>Setup Required:</strong><br>Please paste your Cloud Page URL in the HTML code (line 106).</span>';
             return;
         }
 
-        // Update UI
-        statusMsg.innerText = "Running...";
-        statusMsg.style.color = "#007bff"; // Blue
-        outputDiv.innerHTML = '<span style="color:#999">Processing request...</span>';
+        // Start Loading State (Spinner ON)
+        statusMsg.innerText = "Executing...";
+        outputDiv.innerHTML = ''; // Clear previous output
+        runBtn.disabled = true;
+        spinner.style.display = 'block';
+        btnText.innerText = "Running...";
 
         try {
             const response = await fetch(CLOUD_PAGE_URL, {
@@ -227,32 +189,71 @@
                 body: code
             });
 
-            const result = await response.text();
+            const text = await response.text();
             
-            statusMsg.innerText = "Done";
-            statusMsg.style.color = "#28a745"; // Green
-            outputDiv.innerHTML = result; 
+            // Format the result (Check if it's that messy error or clean HTML)
+            const formattedResult = parseResult(text);
             
-        } catch (error) {
-            statusMsg.innerText = "Error";
-            statusMsg.style.color = "#dc3545"; // Red
-            
-            // Simplified, Developer-Friendly Error
-           outputDiv.innerHTML = `
-                <span style="color:#dc3545; font-weight:bold; font-size: 1.1em;">
-                    ⚠ Request Failed
-                </span>
-                <br><br>
-                <strong>System Message:</strong> <span style="font-family:monospace; background:#eee; padding:2px 5px; border-radius:3px;">${error.message}</span>
-                <br><br>
-                <div style="font-size: 0.9em; color: #666; border-top: 1px solid #ddd; padding-top: 10px;">
-                    <strong>Troubleshooting:</strong><br>
-                    • If the message is "Failed to fetch", check if your Cloud Page has the <b>CORS headers</b>.<br>
-                    • Check if your VPN or Firewall is blocking the URL.<br>
-                    • Verify the URL is correct in the code.
-                </div>
-            `;
+            outputDiv.innerHTML = formattedResult;
+            statusMsg.innerText = "Success";
+            statusMsg.style.color = "#28a745";
+
+        } catch (networkError) {
+            statusMsg.innerText = "Failed";
+            statusMsg.style.color = "#dc3545";
+            outputDiv.innerHTML = `<div class="error-box"><span class="error-title">Network Error</span>${networkError.message}</div>`;
+        } finally {
+            // Stop Loading State (Spinner OFF)
+            runBtn.disabled = false;
+            spinner.style.display = 'none';
+            btnText.innerText = "Run Code";
         }
+    }
+
+    // 3. The Smart Formatter Logic
+    function parseResult(text) {
+        // Step 1: Check if it starts with "Error: {" (The SSJS Stringify format)
+        if (text.trim().startsWith('Error: {')) {
+            try {
+                // Remove "Error: " prefix to get clean JSON
+                const jsonString = text.trim().substring(7); 
+                const errorObj = JSON.parse(jsonString);
+
+                // We successfully parsed the JSON! Now make it pretty.
+                let prettyHtml = `<div class="error-box">`;
+                
+                // Show the main message
+                if(errorObj.message) {
+                    prettyHtml += `<span class="error-title">${errorObj.message}</span>`;
+                }
+
+                // Show the description, but replace \r\n with <br> for readability
+                if(errorObj.description) {
+                    // Replace newlines with <br>
+                    let cleanDesc = errorObj.description
+                        .replace(/\r\n/g, "<br>")
+                        .replace(/\n/g, "<br>");
+                    
+                    // Highlight "inner exception" headers to make them stand out
+                    cleanDesc = cleanDesc.replace(
+                        /--- inner exception (\d+)---/g, 
+                        '<br><strong style="color:#b71c1c; text-transform:uppercase;">--- Inner Exception $1 ---</strong>'
+                    );
+
+                    prettyHtml += `<div class="error-detail">${cleanDesc}</div>`;
+                }
+                
+                prettyHtml += `</div>`;
+                return prettyHtml;
+
+            } catch (e) {
+                // If parsing failed, just show the raw text
+                return text; 
+            }
+        }
+
+        // Step 2: Not an error? Just return the HTML/Text normally
+        return text;
     }
 </script>
 
