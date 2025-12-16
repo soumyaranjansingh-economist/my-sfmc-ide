@@ -100,6 +100,34 @@
         .error-title { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; display: block; }
         .error-detail { color: #d32f2f; font-size: 0.95em; line-height: 1.6; }
         .inner-exception { margin-top: 10px; padding-left: 10px; border-left: 3px solid #ef9a9a; color: #555; }
+
+        details {
+            margin-top: 15px;
+            border: 1px solid #f5c6cb;
+            background: #fff;
+            border-radius: 4px;
+        }
+        summary {
+            padding: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #721c24;
+            background: #f8d7da;
+            font-weight: bold;
+            outline: none;
+        }
+        summary:hover {
+            background: #f5c6cb;
+        }
+        .stack-trace {
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            color: #555;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            background: #fffafa;
+        }
     </style>
 </head>
 <body>
@@ -211,48 +239,68 @@
     }
 
     // 3. The Smart Formatter Logic
+    // 3. The Smart Formatter Logic (Updated for SSJS & Jint Errors)
     function parseResult(text) {
-        // Step 1: Check if it starts with "Error: {" (The SSJS Stringify format)
-        if (text.trim().startsWith('Error: {')) {
+        let errorObj = null;
+        let isJsonError = false;
+
+        // Clean the text to see if it's JSON
+        // Sometimes it starts with "Error: {" and sometimes just "{"
+        let cleanText = text.trim();
+        if (cleanText.startsWith('Error: ')) {
+            cleanText = cleanText.substring(7); // Remove "Error: " prefix
+        }
+
+        // Try to parse it as JSON
+        if (cleanText.startsWith('{')) {
             try {
-                // Remove "Error: " prefix to get clean JSON
-                const jsonString = text.trim().substring(7); 
-                const errorObj = JSON.parse(jsonString);
-
-                // We successfully parsed the JSON! Now make it pretty.
-                let prettyHtml = `<div class="error-box">`;
-                
-                // Show the main message
-                if(errorObj.message) {
-                    prettyHtml += `<span class="error-title">${errorObj.message}</span>`;
-                }
-
-                // Show the description, but replace \r\n with <br> for readability
-                if(errorObj.description) {
-                    // Replace newlines with <br>
-                    let cleanDesc = errorObj.description
-                        .replace(/\r\n/g, "<br>")
-                        .replace(/\n/g, "<br>");
-                    
-                    // Highlight "inner exception" headers to make them stand out
-                    cleanDesc = cleanDesc.replace(
-                        /--- inner exception (\d+)---/g, 
-                        '<br><strong style="color:#b71c1c; text-transform:uppercase;">--- Inner Exception $1 ---</strong>'
-                    );
-
-                    prettyHtml += `<div class="error-detail">${cleanDesc}</div>`;
-                }
-                
-                prettyHtml += `</div>`;
-                return prettyHtml;
-
+                errorObj = JSON.parse(cleanText);
+                isJsonError = true;
             } catch (e) {
-                // If parsing failed, just show the raw text
-                return text; 
+                // Not valid JSON, ignore
             }
         }
 
-        // Step 2: Not an error? Just return the HTML/Text normally
+        // If it is a JSON error, format it beautifully
+        if (isJsonError && errorObj) {
+            let prettyHtml = `<div class="error-box">`;
+            
+            // 1. The Main Message (e.g., "Object expected: Stringif")
+            if(errorObj.message) {
+                prettyHtml += `<span class="error-title">⚠ Execution Error: ${errorObj.message}</span>`;
+            } else {
+                prettyHtml += `<span class="error-title">⚠ An Error Occurred</span>`;
+            }
+
+            // 2. The Description (Clean up newlines)
+            if(errorObj.description) {
+                // Remove the duplicate message from description if present
+                let cleanDesc = errorObj.description.replace(errorObj.message, "").trim();
+                
+                cleanDesc = cleanDesc
+                    .replace(/\r\n/g, "<br>")
+                    .replace(/\n/g, "<br>");
+
+                if(cleanDesc.length > 0) {
+                     prettyHtml += `<div class="error-detail">${cleanDesc}</div>`;
+                }
+            }
+
+            // 3. The Jint Exception (The scary stack trace) - Put in a Dropdown
+            if(errorObj.jintException) {
+                prettyHtml += `
+                    <details>
+                        <summary>View System Stack Trace</summary>
+                        <div class="stack-trace">${errorObj.jintException}</div>
+                    </details>
+                `;
+            }
+            
+            prettyHtml += `</div>`;
+            return prettyHtml;
+        }
+
+        // If NOT an error (or just normal HTML), return as is
         return text;
     }
 </script>
