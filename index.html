@@ -3,133 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SFMC Query Studio Lite</title>
+    <title>SFMC Dev Console</title>
     <style>
+        /* Clean Light Theme */
         :root {
-            --bg-color: #1e1e1e;
-            --accent-color: #007acc;
-            --text-color: #d4d4d4;
-            --border-color: #3c3c3c;
+            --bg-color: #f4f6f8;       /* Light Grey Background */
+            --card-color: #ffffff;     /* White Container */
+            --accent-color: #007bff;   /* SFMC Blue */
+            --text-color: #333333;     /* Dark Grey Text */
+            --border-color: #e1e4e8;   /* Subtle Borders */
         }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 15px; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Soft Shadow */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Keeps corners rounded */
+        }
+
+        /* Header Area */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-color);
+            background: #fafbfc;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header img { height: 28px; }
+        h2 { margin: 0; font-size: 1.1rem; font-weight: 600; color: #24292e; }
 
         /* Toolbar */
-        .toolbar { display: flex; gap: 10px; background: #252526; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); align-items: center; }
-        input[type="text"], select { background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; border-radius: 3px; }
-        input[type="text"] { flex-grow: 1; }
-        .run-btn { background-color: var(--accent-color); color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 3px; font-weight: bold; }
-        .run-btn:hover { background-color: #005f9e; }
+        .toolbar {
+            padding: 15px 25px;
+            background: var(--card-color);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-        /* Editor */
-        textarea { width: 100%; height: 250px; background-color: #1e1e1e; color: #9cdcfe; border: 1px solid var(--accent-color); padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; box-sizing: border-box; border-radius: 5px; }
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #495057;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+        }
+        select:hover { border-color: #adb5bd; }
 
-        /* The Output Table (Query Studio Style) */
-        #outputArea { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; font-family: sans-serif; }
-        th, td { border: 1px solid #444; padding: 8px; text-align: left; }
-        th { background-color: #333; color: white; }
-        tr:nth-child(even) { background-color: #252526; }
-        tr:hover { background-color: #303030; }
-        .raw-text { white-space: pre-wrap; font-family: monospace; padding: 15px; background: #111; border-left: 4px solid var(--accent-color); }
+        /* The Run Button */
+        .run-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+            margin-left: auto; /* Pushes button to the right */
+        }
+        .run-btn:hover { background-color: #0056b3; }
+
+        /* The Editor Area */
+        .editor-container {
+            padding: 0;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 350px;
+            background-color: #ffffff;
+            color: #24292e;
+            border: none;
+            padding: 25px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            box-sizing: border-box;
+            resize: vertical;
+            outline: none;
+        }
+        /* Add a subtle top shadow to separate editor from toolbar */
+        textarea { box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+
+        /* The Output Area */
+        .output-section {
+            background: #fafbfc;
+            border-top: 1px solid var(--border-color);
+            padding: 0;
+        }
+        
+        .output-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6a737d;
+            padding: 10px 25px;
+            background: #f6f8fa;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+        }
+        
+        #output {
+            padding: 25px;
+            min-height: 80px;
+            white-space: pre-wrap;
+            font-family: 'Menlo', monospace;
+            font-size: 13px;
+            color: #24292e;
+        }
+
+        /* Status Indicator */
+        .status { font-size: 0.85rem; color: #6a737d; font-weight: 500; }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="toolbar">
-        <h3>⚡ Query Studio Lite</h3>
-        <select id="langSelect" onchange="changeTemplate()">
-            <option value="" disabled selected>Load Template...</option>
-            <option value="data">SELECT (Instant Data)</option>
-            <option value="sql">SELECT (Standard SQL - Slow)</option>
-            <option value="ampscript">AMPscript</option>
-        </select>
-        <input type="text" id="sfmcUrl" placeholder="Paste Cloud Page URL here...">
-        <button class="run-btn" onclick="runCode()">Run</button>
+    
+    <div class="header">
+        <div class="header-left">
+            <img src="https://eu1static.oktacdn.com/fs/bco/4/fs0atfh9rvkiGsYSQ0i7" alt="Logo"/>
+            <h2>SFMC Console</h2>
+        </div>
+        <span class="status" id="statusMsg">Ready</span>
     </div>
 
-    <textarea id="codeEditor" spellcheck="false" placeholder="Select 'SELECT (Instant Data)' to start querying..."></textarea>
-    
-    <div id="outputArea"></div>
+    <div class="toolbar">
+        <label style="font-size: 14px; color: #555;">Language:</label>
+        <select id="langSelect" onchange="changeTemplate()">
+            <option value="empty" disabled selected>Select...</option>
+            <option value="ampscript">AMPscript</option>
+            <option value="ssjs">SSJS</option>
+            <option value="html">HTML</option>
+        </select>
+        
+        <button class="run-btn" onclick="runCode()">Run Code</button>
+    </div>
+
+    <div class="editor-container">
+        <textarea id="codeEditor" spellcheck="false" placeholder="// Write your code here..."></textarea>
+    </div>
+
+    <div class="output-section">
+        <div class="output-label">Result</div>
+        <div id="output">Waiting for input...</div>
+    </div>
+
 </div>
 
 <script>
-    // --- 1. Templates ---
+    // ---------------------------------------------------------
+    // ⚠️ CONFIGURATION: PASTE YOUR CLOUD PAGE URL HERE
+    // ---------------------------------------------------------
+    const CLOUD_PAGE_URL = "https://mc3cs0j7vcrk2rn8hkvfw-jmp6k4.pub.sfmc-content.com/0gnmxcncp1c"; 
+    // ---------------------------------------------------------
+
+    // 1. Templates
     const templates = {
-        // This is the "Magic" script that acts like Query Studio
-        data: `<script runat="server">\n    Platform.Load("Core", "1");\n    var proxy = new Script.Util.WSProxy();\n    try {\n        \n        /* 1. MODIFY THIS SETTINGS */\n        var deName = "ENT.Subscribers"; // Name of Data Extension or View\n        var cols = ["SubscriberKey", "EmailAddress", "Status"]; // Columns to Select\n        var filter = {\n            Property: "Status",\n            SimpleOperator: "equals",\n            Value: "Active"\n        };\n\n        /* 2. EXECUTE QUERY */\n        var data = proxy.retrieve(deName, cols, filter);\n        \n        /* 3. RETURN JSON (Auto-Table) */\n        Write(Stringify(data.Results));\n\n    } catch(e) {\n        Write(Stringify(e));\n    }\n<\/script>`,
-
-        // Explanation of why raw SQL is hard
-        sql: `\n`,
-
-        ampscript: `%%[\n    SET @msg = "Hello World"\n]%%\nOutput: %%=v(@msg)=%%`
+        ampscript: `%%[\n    /* AMPscript Block */\n    VAR @msg\n    SET @msg = "Hello World"\n]%%\n\nMessage: %%=v(@msg)=%%`,
+        
+        ssjs: `<script runat="server">\n    Platform.Load("Core", "1");\n    try {\n        var data = { status: "OK", value: 100 };\n        Write(Stringify(data));\n    } catch(e) {\n        Write("Error");\n    }\n<\/script>`,
+        
+        html: `<h3>HTML Test</h3>\n<hr>\n<p>This is a test.</p>`
     };
 
-    // --- 2. Load URL from Memory ---
-    window.onload = () => {
-        const savedUrl = localStorage.getItem("sfmc_runner_url");
-        if(savedUrl) document.getElementById('sfmcUrl').value = savedUrl;
-    };
-
+    // 2. Dropdown Logic
     function changeTemplate() {
         const lang = document.getElementById('langSelect').value;
-        if(templates[lang]) document.getElementById('codeEditor').value = templates[lang];
-    }
-
-    // --- 3. Run & Format Results ---
-    async function runCode() {
-        const url = document.getElementById('sfmcUrl').value;
-        const code = document.getElementById('codeEditor').value;
-        const out = document.getElementById('outputArea');
-
-        if(!url) { alert("Need URL!"); return; }
-        localStorage.setItem("sfmc_runner_url", url);
+        const editor = document.getElementById('codeEditor');
         
-        out.innerHTML = "<p style='color:#888'>Running Query...</p>";
-
-        try {
-            const res = await fetch(url, { method: 'POST', body: code });
-            const text = await res.text();
-
-            // Try to parse JSON to make a Table
-            try {
-                const jsonData = JSON.parse(text);
-                if(Array.isArray(jsonData) && jsonData.length > 0) {
-                    out.innerHTML = createTable(jsonData);
-                } else {
-                    out.innerHTML = `<div class="raw-text">${text}</div>`;
-                }
-            } catch (e) {
-                // Not JSON? Just show text
-                out.innerHTML = `<div class="raw-text">${text}</div>`;
-            }
-            
-        } catch (err) {
-            out.innerHTML = "Error: " + err;
+        // Simple confirmation if code exists
+        if(editor.value.length > 10 && !confirm("Overwrite current code?")) return;
+        
+        if(templates[lang]) {
+            editor.value = templates[lang];
         }
     }
 
-    // --- 4. The Table Generator ---
-    function createTable(data) {
-        if(data.length === 0) return "No Rows Found.";
-        
-        // Get headers from first object
-        const headers = Object.keys(data[0]);
-        
-        let html = '<table><thead><tr>';
-        headers.forEach(h => html += `<th>${h}</th>`);
-        html += '</tr></thead><tbody>';
-        
-        data.forEach(row => {
-            html += '<tr>';
-            headers.forEach(h => html += `<td>${row[h]}</td>`);
-            html += '</tr>';
-        });
-        
-        html += '</tbody></table>';
-        return html;
+    // 3. Run Function
+    async function runCode() {
+        const code = document.getElementById('codeEditor').value;
+        const outputDiv = document.getElementById('output');
+        const statusMsg = document.getElementById('statusMsg');
+
+        // Check if user forgot to update the URL in the code
+        if(CLOUD_PAGE_URL.includes("YOUR-CLOUD-PAGE")) {
+            alert("Configuration Error: Please open index.html and paste your Cloud Page URL in line 104.");
+            return;
+        }
+
+        // Update UI
+        statusMsg.innerText = "Running...";
+        statusMsg.style.color = "#007bff"; // Blue
+        outputDiv.innerHTML = '<span style="color:#999">Processing request...</span>';
+
+        try {
+            const response = await fetch(CLOUD_PAGE_URL, {
+                method: 'POST',
+                body: code
+            });
+
+            const result = await response.text();
+            
+            statusMsg.innerText = "Done";
+            statusMsg.style.color = "#28a745"; // Green
+            outputDiv.innerHTML = result; 
+            
+        } catch (error) {
+            statusMsg.innerText = "Error";
+            statusMsg.style.color = "#dc3545"; // Red
+            
+            // Simplified, Developer-Friendly Error
+           outputDiv.innerHTML = `
+                <span style="color:#dc3545; font-weight:bold; font-size: 1.1em;">
+                    ⚠ Request Failed
+                </span>
+                <br><br>
+                <strong>System Message:</strong> <span style="font-family:monospace; background:#eee; padding:2px 5px; border-radius:3px;">${error.message}</span>
+                <br><br>
+                <div style="font-size: 0.9em; color: #666; border-top: 1px solid #ddd; padding-top: 10px;">
+                    <strong>Troubleshooting:</strong><br>
+                    • If the message is "Failed to fetch", check if your Cloud Page has the <b>CORS headers</b>.<br>
+                    • Check if your VPN or Firewall is blocking the URL.<br>
+                    • Verify the URL is correct in the code.
+                </div>
+            `;
+        }
     }
 </script>
+
 </body>
 </html>
