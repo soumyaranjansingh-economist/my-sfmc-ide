@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SFMC Dev Console (Pro)</title>
+    <title>SFMC Dev Console</title>
     <style>
         /* Base Theme */
         :root {
@@ -12,10 +12,8 @@
             --accent-color: #007bff;
             --text-color: #333;
             --border-color: #e1e4e8;
-            --editor-bg: #1e1e1e; 
+            --editor-bg: #1e1e1e; /* VS Code Dark */
             --editor-text: #d4d4d4;
-            --gutter-bg: #252526;
-            --gutter-text: #858585;
         }
 
         body {
@@ -26,7 +24,7 @@
         }
 
         .container {
-            width: 100%; max-width: 1000px;
+            width: 100%; max-width: 950px;
             background: var(--card-color);
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
@@ -34,7 +32,7 @@
             overflow: hidden;
         }
 
-        /* Header & Toolbar */
+        /* Header */
         .header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 15px 25px; border-bottom: 1px solid var(--border-color); background: #fafbfc;
@@ -43,6 +41,7 @@
         .header img { height: 28px; }
         h2 { margin: 0; font-size: 1.1rem; font-weight: 600; color: #24292e; }
 
+        /* Toolbar */
         .toolbar {
             padding: 12px 25px; background: #fff;
             display: flex; gap: 15px; align-items: center;
@@ -59,50 +58,30 @@
         .run-btn:hover { background-color: #0056b3; }
         .run-btn:disabled { background-color: #a0cfff; cursor: not-allowed; }
 
-        /* Spinner */
+        /* Spinner (Loader) */
         .spinner {
-            display: none; width: 16px; height: 16px;
-            border: 2px solid #ffffff; border-top: 2px solid transparent;
-            border-radius: 50%; animation: spin 0.8s linear infinite;
+            display: none; /* Hidden by default */
+            width: 16px; height: 16px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Editor with Gutter */
-        .editor-wrapper {
-            display: flex;
-            height: 400px;
-            position: relative;
-            background-color: var(--editor-bg);
-        }
-
-        .line-numbers {
-            width: 40px;
-            background-color: var(--gutter-bg);
-            color: var(--gutter-text);
-            text-align: right;
-            padding: 20px 5px;
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            user-select: none;
-            border-right: 1px solid #333;
-            overflow: hidden;
-        }
-
+        /* Dark Editor */
+        .editor-container { position: relative; background: var(--editor-bg); }
         textarea {
-            flex-grow: 1;
-            height: 100%;
+            width: 100%; height: 400px;
             background-color: var(--editor-bg);
             color: var(--editor-text);
             border: none; padding: 20px;
             font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
             font-size: 13px; line-height: 1.6;
-            box-sizing: border-box; resize: none; outline: none;
-            white-space: pre;
-            overflow: auto;
+            box-sizing: border-box; resize: vertical; outline: none;
         }
 
-        /* Output & Debug Styles */
+        /* Output Section */
         .output-section { background: #fafbfc; border-top: 1px solid var(--border-color); }
         .output-label {
             font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
@@ -112,39 +91,53 @@
         #output {
             padding: 25px; min-height: 100px;
             font-family: 'Menlo', monospace; font-size: 13px; color: #24292e;
-            white-space: pre-wrap; overflow-x: auto;
+            white-space: pre-wrap; /* Preserve formatting */
+            overflow-x: auto;
         }
-
-        /* Breakpoint & Log Styles */
-        .debug-breakpoint {
-            border: 1px solid #f5c6cb; background-color: #f8d7da; color: #721c24;
-            padding: 15px; border-radius: 4px; margin-bottom: 10px;
-        }
-        .debug-title { font-weight: bold; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .debug-log {
-            border-left: 3px solid #007bff; background-color: #e7f1ff; color: #004085;
-            padding: 10px; margin-bottom: 5px; font-family: monospace;
-        }
-        .debug-data { background: rgba(255,255,255,0.5); padding: 5px; border-radius: 3px; }
 
         /* Error Styles */
         .error-box { background: #fff5f5; border: 1px solid #ffcdd2; padding: 15px; border-radius: 4px; color: #b71c1c; }
         .error-title { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; display: block; }
         .error-detail { color: #d32f2f; font-size: 0.95em; line-height: 1.6; }
-        
-        details { margin-top: 10px; border: 1px solid #e2e2e2; border-radius: 4px; }
-        summary { padding: 8px; cursor: pointer; background: #f0f0f0; font-weight: bold; font-size: 0.9em; }
-        .stack-trace { padding: 10px; font-size: 11px; background: #fff; overflow-x: auto; }
+        .inner-exception { margin-top: 10px; padding-left: 10px; border-left: 3px solid #ef9a9a; color: #555; }
 
+        details {
+            margin-top: 15px;
+            border: 1px solid #f5c6cb;
+            background: #fff;
+            border-radius: 4px;
+        }
+        summary {
+            padding: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #721c24;
+            background: #f8d7da;
+            font-weight: bold;
+            outline: none;
+        }
+        summary:hover {
+            background: #f5c6cb;
+        }
+        .stack-trace {
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            color: #555;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            background: #fffafa;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
+    
     <div class="header">
         <div class="header-left">
             <img src="https://eu1static.oktacdn.com/fs/bco/4/fs0atfh9rvkiGsYSQ0i7" alt="Logo"/>
-            <h2>SFMC Console Pro</h2>
+            <h2>SFMC Console</h2>
         </div>
         <span class="status" id="statusMsg">Ready</span>
     </div>
@@ -153,8 +146,8 @@
         <label style="font-size: 14px; color: #555;">Template:</label>
         <select id="langSelect" onchange="changeTemplate()">
             <option value="empty" disabled selected>Select...</option>
-            <option value="ssjs_debug">SSJS with Breakpoints</option>
             <option value="ampscript">AMPscript</option>
+            <option value="ssjs">SSJS</option>
             <option value="html">HTML</option>
         </select>
         
@@ -164,15 +157,15 @@
         </button>
     </div>
 
-    <div class="editor-wrapper">
-        <div class="line-numbers" id="lineNumbers">1</div>
-        <textarea id="codeEditor" spellcheck="false" oninput="updateLineNumbers()" onscroll="syncScroll()" placeholder="// Write your code here..."></textarea>
+    <div class="editor-container">
+        <textarea id="codeEditor" spellcheck="false" placeholder="// Write your code here..."></textarea>
     </div>
 
     <div class="output-section">
         <div class="output-label">Console Result</div>
         <div id="output">Waiting for input...</div>
     </div>
+
 </div>
 
 <script>
@@ -184,10 +177,8 @@
 
     // 1. Templates
     const templates = {
-        ssjs_debug: `<script runat="server">\n    Platform.Load("Core", "1");\n    try {\n        var name = "Developer";\n        var status = "Active";\n        \n        // 1. Log something without stopping\n        inspect("Current Status", status);\n\n        // 2. Perform logic\n        var result = 100 * 5;\n\n        // 3. STOP execution here to check result\n        breakpoint(result);\n\n        // This line will NEVER run because of the breakpoint above\n        Write("I will not print.");\n\n    } catch(e) {\n        if(e !== "BREAKPOINT") Write(Stringify(e));\n    }\n<\/script>`,
-        
-        ampscript: `%%[\n    VAR @msg\n    SET @msg = "Hello World"\n]%%\nMessage: %%=v(@msg)=%%`,
-        
+        ampscript: `%%[\n    /* AMPscript Error Test */\n    /* Note: The missing quote below causes an error on purpose */\n    VAR @msg\n    SET @msg = "Hello World\n]%%\n\nMessage: %%=v(@msg)=%%`,
+        ssjs: `<script runat="server">\n    Platform.Load("Core", "1");\n    try {\n        var data = { status: "OK" };\n        Write(Stringify(data));\n    } catch(e) {\n        Write(Stringify(e));\n    }\n<\/script>`,
         html: `<h3>HTML Test</h3>\n<hr>\n<p>This is a test.</p>`
     };
 
@@ -195,54 +186,43 @@
         const lang = document.getElementById('langSelect').value;
         const editor = document.getElementById('codeEditor');
         if(editor.value.length > 10 && !confirm("Overwrite current code?")) return;
-        if(templates[lang]) { 
-            editor.value = templates[lang];
-            updateLineNumbers(); // Update gutter
-        }
+        if(templates[lang]) editor.value = templates[lang];
     }
 
     // 2. Main Run Function
     async function runCode() {
-        let code = document.getElementById('codeEditor').value;
+        const code = document.getElementById('codeEditor').value;
         const outputDiv = document.getElementById('output');
         const statusMsg = document.getElementById('statusMsg');
         const runBtn = document.getElementById('runBtn');
         const spinner = document.getElementById('loadingSpinner');
         const btnText = document.getElementById('btnText');
 
+        // Validation
         if(CLOUD_PAGE_URL.includes("YOUR-CLOUD-PAGE")) {
-            outputDiv.innerHTML = '<span style="color:#d32f2f">⚠ Setup Required: Paste URL in line 160.</span>';
+            outputDiv.innerHTML = '<span style="color:#d32f2f">⚠ <strong>Setup Required:</strong><br>Please paste your Cloud Page URL in the HTML code (line 106).</span>';
             return;
         }
 
-        // --- INJECT DEBUG LIBRARY ---
-        // This puts the 'breakpoint()' and 'inspect()' functions secretly at the top of your code
-        const debugLib = `
-<script runat="server">
-    function breakpoint(val) {
-        Write('{"type":"break", "data":' + Stringify(val) + '}');
-        throw "BREAKPOINT"; // Stops execution
-    }
-    function inspect(label, val) {
-        Write('{"type":"log", "label":"' + label + '", "data":' + Stringify(val) + '}');
-    }
-<\/script>
-`;
-        // Only inject into SSJS scripts (check for run=server)
-        if(code.includes('runat="server"')) {
-            code = debugLib + code;
-        }
-
-        // UI State: Running
+        // Start Loading State (Spinner ON)
         statusMsg.innerText = "Executing...";
-        runBtn.disabled = true; spinner.style.display = 'block'; btnText.innerText = "Running...";
-        outputDiv.innerHTML = '';
+        outputDiv.innerHTML = ''; // Clear previous output
+        runBtn.disabled = true;
+        spinner.style.display = 'block';
+        btnText.innerText = "Running...";
 
         try {
-            const response = await fetch(CLOUD_PAGE_URL, { method: 'POST', body: code });
+            const response = await fetch(CLOUD_PAGE_URL, {
+                method: 'POST',
+                body: code
+            });
+
             const text = await response.text();
             
-            outputDiv.innerHTML = parseResult(text);
+            // Format the result (Check if it's that messy error or clean HTML)
+            const formattedResult = parseResult(text);
+            
+            outputDiv.innerHTML = formattedResult;
             statusMsg.innerText = "Success";
             statusMsg.style.color = "#28a745";
 
@@ -251,84 +231,83 @@
             statusMsg.style.color = "#dc3545";
             outputDiv.innerHTML = `<div class="error-box"><span class="error-title">Network Error</span>${networkError.message}</div>`;
         } finally {
-            runBtn.disabled = false; spinner.style.display = 'none'; btnText.innerText = "Run Code";
+            // Stop Loading State (Spinner OFF)
+            runBtn.disabled = false;
+            spinner.style.display = 'none';
+            btnText.innerText = "Run Code";
         }
     }
 
-    // 3. Smart Result Parser (Handles Breakpoints & Errors)
+    // 3. The Smart Formatter Logic (Fixed to allow Success JSON)
     function parseResult(text) {
-        let htmlBuffer = "";
+        let errorObj = null;
+        let isJson = false;
+
+        // Clean the text
+        let cleanText = text.trim();
         
-        // Split input by our special debug markers
-        // We use Regex to separate normal HTML from our JSON debug logs
-        const parts = text.split(/(|)/);
+        // 1. Check if it was explicitly flagged as Error by our Listener
+        if (cleanText.startsWith('Error: ')) {
+            cleanText = cleanText.substring(7); // Remove "Error: "
+        }
 
-        parts.forEach(part => {
-            if (part === "" || part === "") return; // Skip markers
-            
-            // Try to parse as Debug JSON
-            if (part.trim().startsWith('{')) {
-                try {
-                    const obj = JSON.parse(part);
-                    
-                    if (obj.type === "break") {
-                        // RENDER BREAKPOINT UI
-                        htmlBuffer += `
-                            <div class="debug-breakpoint">
-                                <span class="debug-title">🛑 Breakpoint Hit (Execution Stopped)</span>
-                                <div class="debug-data">${JSON.stringify(obj.data, null, 4)}</div>
-                            </div>`;
-                        return;
-                    }
-                    if (obj.type === "log") {
-                        // RENDER LOG UI
-                        htmlBuffer += `
-                            <div class="debug-log">
-                                <strong>ℹ ${obj.label}:</strong> 
-                                <span class="debug-data">${JSON.stringify(obj.data)}</span>
-                            </div>`;
-                        return;
-                    }
-                    
-                    // Standard Error Handling (from previous step)
-                    if (obj.jintException || (obj.message && obj.description)) {
-                         htmlBuffer += renderError(obj);
-                         return;
-                    }
-
-                } catch(e) {} // Not JSON? Fall through.
+        // 2. Try to parse as JSON
+        if (cleanText.startsWith('{') || cleanText.startsWith('[')) {
+            try {
+                errorObj = JSON.parse(cleanText);
+                isJson = true;
+            } catch (e) {
+                // Not valid JSON, treat as normal text/HTML
             }
-            // Just normal HTML/Text
-            htmlBuffer += part;
-        });
-
-        return htmlBuffer || text;
-    }
-
-    function renderError(errorObj) {
-        let pretty = `<div class="error-box"><span class="error-title">⚠ ${errorObj.message || "Error"}</span>`;
-        if(errorObj.description) {
-            let desc = errorObj.description.replace(errorObj.message, "").trim().replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
-            if(desc) pretty += `<div class="error-detail">${desc}</div>`;
         }
-        if(errorObj.jintException) {
-            pretty += `<details><summary>System Stack Trace</summary><div class="stack-trace">${errorObj.jintException}</div></details>`;
-        }
-        return pretty + `</div>`;
-    }
 
-    // 4. Editor Gutter Logic (Line Numbers)
-    function updateLineNumbers() {
-        const editor = document.getElementById('codeEditor');
-        const lines = editor.value.split('\n').length;
-        document.getElementById('lineNumbers').innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+        // 3. DECISION TIME: Is this an Error or just Data?
+        if (isJson && errorObj) {
+            
+            // Check for specific "signatures" of an SFMC Error
+            const isRealError = (
+                errorObj.jintException ||                 // SSJS System Error
+                (errorObj.message && errorObj.description && errorObj.message.includes("Error")) || // AMPscript Error
+                (errorObj.message && errorObj.description && errorObj.description.includes("Exception"))
+            );
+
+            if (isRealError) {
+                // --- RENDER ERROR UI ---
+                let prettyHtml = `<div class="error-box">`;
+                
+                // Title
+                let title = errorObj.message || "Execution Error";
+                prettyHtml += `<span class="error-title">⚠ ${title}</span>`;
+
+                // Description
+                if(errorObj.description) {
+                    let cleanDesc = errorObj.description.replace(errorObj.message, "").trim();
+                    cleanDesc = cleanDesc.replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
+                    if(cleanDesc) prettyHtml += `<div class="error-detail">${cleanDesc}</div>`;
+                }
+
+                // Stack Trace (Hidden by default)
+                if(errorObj.jintException) {
+                    prettyHtml += `
+                        <details>
+                            <summary>View System Stack Trace</summary>
+                            <div class="stack-trace">${errorObj.jintException}</div>
+                        </details>
+                    `;
+                }
+                prettyHtml += `</div>`;
+                return prettyHtml;
+            } 
+            else {
+                // --- RENDER SUCCESS UI (PRETTY JSON) ---
+                // If it's just data (e.g. {status: "OK"}), show it nicely formatted
+                return `<pre style="color: #28a745; font-weight: bold;">${JSON.stringify(errorObj, null, 4)}</pre>`;
+            }
+        }
+
+        // 4. Not JSON? Just return the HTML/Text normally
+        return text;
     }
-    function syncScroll() {
-        const editor = document.getElementById('codeEditor');
-        document.getElementById('lineNumbers').scrollTop = editor.scrollTop;
-    }
-    // Init line numbers on load
-    window.onload = updateLineNumbers; 
 </script>
 
 </body>
